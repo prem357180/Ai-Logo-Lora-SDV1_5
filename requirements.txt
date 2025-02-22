@@ -1,3 +1,6 @@
 fastapi
 uvicorn
+gradio
 requests
+pillow
+python-dotenv
