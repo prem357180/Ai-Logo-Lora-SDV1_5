@@ -22,37 +22,51 @@ app = FastAPI()
 # Function to generate logo using Hugging Face API
 def generate_logo(prompt):
     payload = {"inputs": prompt + " logo"}
-    response = requests.post(MODEL_URL, headers=headers, json=payload)
+    
+    try:
+        response = requests.post(MODEL_URL, headers=headers, json=payload, timeout=30)
+        
+        # Check for valid response
+        if response.status_code != 200:
+            return None, f"Error: {response.status_code} - {response.text}"
 
-    if response.status_code == 200:
-        # Hugging Face returns a JSON with an image URL
-        image_url = response.json()[0]['generated_image_url']
-        image_response = requests.get(image_url)
+        # Try to parse JSON response
+        try:
+            data = response.json()
+            if not isinstance(data, list) or "generated_image_url" not in data[0]:
+                return None, "Invalid API response format."
+            
+            image_url = data[0]['generated_image_url']
+            image_response = requests.get(image_url, timeout=30)
 
-        if image_response.status_code == 200:
-            image = Image.open(BytesIO(image_response.content))
-            file_path = "generated_logo.png"
-            image.save(file_path)
-            return file_path
-        else:
-            return None
-    else:
-        return None
+            if image_response.status_code == 200:
+                image = Image.open(BytesIO(image_response.content))
+                file_path = "generated_logo.png"
+                image.save(file_path)
+                return file_path, None
+            else:
+                return None, f"Failed to download image. Status: {image_response.status_code}"
+
+        except requests.exceptions.JSONDecodeError:
+            return None, "API returned invalid JSON."
+
+    except requests.exceptions.RequestException as e:
+        return None, f"Request failed: {str(e)}"
 
 # FastAPI endpoint for API access
 @app.get("/generate/{prompt}")
 def generate_api(prompt: str):
-    file_path = generate_logo(prompt)
+    file_path, error = generate_logo(prompt)
     if file_path:
         return FileResponse(file_path, media_type="image/png")
-    return {"error": "Failed to generate image"}
+    return {"error": error}
 
 # Gradio UI function
 def gradio_ui(prompt):
-    file_path = generate_logo(prompt)
+    file_path, error = generate_logo(prompt)
     if file_path:
         return Image.open(file_path)
-    return None
+    return f"Error: {error}"
 
 # Launch Gradio Interface
 gr_interface = gr.Interface(fn=gradio_ui, inputs="text", outputs="image", title="AI Logo Generator")
