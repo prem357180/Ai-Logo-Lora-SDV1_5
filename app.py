@@ -1,7 +1,7 @@
 import requests
 import gradio as gr
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from dotenv import load_dotenv
 import os
 from io import BytesIO
@@ -22,27 +22,35 @@ app = FastAPI()
 # Function to generate logo using Hugging Face API
 def generate_logo(prompt):
     payload = {"inputs": prompt + " logo"}
-    
+
     try:
         response = requests.post(MODEL_URL, headers=headers, json=payload, timeout=30)
         
-        # Check for valid response
+        # Check for API request failure
         if response.status_code != 200:
-            return None, f"Error: {response.status_code} - {response.text}"
+            print(f"API Error: {response.status_code} - {response.text}")
+            return None, f"API Error: {response.status_code}"
 
-        # Try to parse JSON response
+        # Validate JSON response
         try:
             data = response.json()
             if not isinstance(data, list) or "generated_image_url" not in data[0]:
                 return None, "Invalid API response format."
-            
+
             image_url = data[0]['generated_image_url']
             image_response = requests.get(image_url, timeout=30)
 
             if image_response.status_code == 200:
                 image = Image.open(BytesIO(image_response.content))
+                
+                # Save the image
                 file_path = "generated_logo.png"
                 image.save(file_path)
+                
+                # Ensure the image is not corrupted
+                if os.path.getsize(file_path) == 0:
+                    return None, "Downloaded image is empty."
+
                 return file_path, None
             else:
                 return None, f"Failed to download image. Status: {image_response.status_code}"
@@ -59,7 +67,7 @@ def generate_api(prompt: str):
     file_path, error = generate_logo(prompt)
     if file_path:
         return FileResponse(file_path, media_type="image/png")
-    return {"error": error}
+    return JSONResponse(content={"error": error}, status_code=400)
 
 # Gradio UI function
 def gradio_ui(prompt):
