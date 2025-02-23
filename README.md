@@ -30,8 +30,8 @@ GET https://ai-logo-lora-sdv1-5.onrender.com/generate/aeroplane-blue-logo
 ## Running Locally
 To run this project locally, clone the repo and install dependencies:
 ```bash
-git clone https://github.com/yourusername/your-repo.git
-cd your-repo
+git clone https://github.com/prem357180/Ai-Logo-Lora-SDV1_5.git
+cd Ai-Logo-Lora-SDV1_5
 pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
