@@ -4,8 +4,8 @@
 This is an AI-powered logo generation service using a LoRA fine-tuned Stable Diffusion model. The model is deployed on **Render** and accessible via FastAPI and Gradio.
 
 ## Live Demo
-Note :- this will not load/ give 502 Bad Gateway error wait for 30-50 sec then reload you can able to access it.
-Try it out here: [AI Logo Generator](https://ai-logo-lora-sdv1-5.onrender.com)
+- Note :- This will not load / can give 502 Bad Gateway error wait for 30-50 sec then reload you can able to access it.
+- Try it out here: [AI Logo Generator](https://ai-logo-lora-sdv1-5.onrender.com)
 
 ## Important Note
 - The API has **limited free calls**, so the website may not always produce the desired output.
